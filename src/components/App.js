@@ -13,7 +13,8 @@ class App extends React.Component {
 
 state = {
     selectedFile: null,
-     editorState: EditorState.createEmpty(),
+    editorState: EditorState.createEmpty(),
+    content: [],
 }
   onEditorStateChange: Function = (editorState) => {
     this.setState({
@@ -21,6 +22,17 @@ state = {
 
     });
   }
+
+    componentDidMount() {
+        axios.get('http://127.0.0.1:8000/post/')
+                .then(response => {
+                    console.log(response);
+                    this.setState({
+                        contents: response.data
+                    })
+
+                });
+        }
 
 
     render() {
