@@ -2,12 +2,12 @@ import React from 'react';
 import Navigation from "./navigation/Navigation";
 import './App.css';
 import { EditorState } from 'draft-js';
-import DraftEditor from './editor/Editor';
-// import { Editor } from '@tinymce/tinymce-react';
 
 import { Editor } from 'react-draft-wysiwyg';
 import '../../node_modules/react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 import axios from 'axios';
+import {stateToHTML} from 'draft-js-export-html';
+
 
 class App extends React.Component {
 
@@ -15,49 +15,58 @@ state = {
     selectedFile: null,
     editorState: EditorState.createEmpty(),
     content: [],
+    contentState: {}
 }
   onEditorStateChange: Function = (editorState) => {
     this.setState({
       editorState,
-
     });
-  }
+}
+
+
+    onButtonSubmit = (event) => {
+        event.preventDefault();
+         let html = stateToHTML(this.state.editorState.getCurrentContent());
+      console.log(html)
+        axios.defaults.xsrfHeaderName = "X-CSRFToken";
+        axios.post('http://127.0.0.1:8000/api/blog/',
+            {post: html},
+        );
+        window.location.reload();
+    };
+
 
     componentDidMount() {
-        axios.get('http://127.0.0.1:8000/post/')
+        axios.get('http://127.0.0.1:8000/api/blog/')
                 .then(response => {
                     console.log(response);
                     this.setState({
-                        contents: response.data
+                        content: response.data
                     })
 
                 });
         }
 
+        createMarkup = (markup) => {
+            return {__html: markup}
+        }
+
 
     render() {
+        const ckeditorList = this.state.content.map(content => {
+            return (
+                    <div key={content.id} className='container blog'>
+                        <div className='blog-col' dangerouslySetInnerHTML={this.createMarkup(content.post)}></div>
+                    </div>
+                )
+            })
+
         return (
             <div className="App">
                 <Navigation/>
-                <div className='container blog'>
-                    <div className='blog-col'>
-                        <h3>Emptiness of the Self</h3>
-                        <p>
-                            The Buddha gave Rahula the teaching on the emptiness of the self in detail. He said,
-                            “Rahula, among the five skandhas —body, feelings, perceptions, mental formations, and
-                            consciousness—there is nothing that can be considered to be permanent and nothing that can
-                            be called a ‘self.’
 
-                            This body is not the self. This body is not something that belongs to the self either. The
-                            self cannot be found in the body, and the body cannot be found in the self. </p>
-                    </div>
-                    <div className='blog-col'></div>
-                    <div className='blog-col'></div>
-                </div>
+                {ckeditorList}
 
-                <div>
-
-                </div>
                     <Editor
                         onEditorStateChange={this.onEditorStateChange}
                         toolbar={{
@@ -74,6 +83,9 @@ state = {
                             }
                         }}
                     />
+                    <br/>
+                        <br/>
+                    <button onClick={this.onButtonSubmit}>Submit</button>
             </div>
         )
     };
