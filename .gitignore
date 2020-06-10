@@ -2,7 +2,7 @@
 .idea/
 /venv
 /db.sqlite3
-
+.idea
 # dependencies
 /node_modules
 /.pnp
